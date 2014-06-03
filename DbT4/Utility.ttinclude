@@ -1,0 +1,109 @@
+﻿<#@ assembly name="System.Core" #>
+<#@ assembly name="System.Data" #>
+<#@ assembly name="System.Xml" #>
+<#@ assembly name="System.Xml.Linq"#>
+<#@ assembly name="EnvDTE"#>
+<#@ assembly name="System.Configuration" #>
+<#@ import namespace="System" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.IO" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Configuration" #>
+<#+
+    public static class TransformationContextExtended
+    {
+        public class Result
+        {
+            public string ConnectionString { get; set; }
+            public string ProviderName { get; set; }
+            public string ConnectionStringConfigFile { get; set; }      // the config file that contains the coneection string name
+        }
+
+        public static Result GetConnection(string connStrName, string[] files)
+        {
+            var project = GetCurrentProject();
+            var projectPath = GetProjectPath(project);
+
+            foreach (var file in files)
+            {
+                var itemName = FindProjectItem(project, file);
+                if (itemName == null)
+                    continue;
+
+                var path = Path.Combine(projectPath, itemName);
+                var configFile = new ExeConfigurationFileMap { ExeConfigFilename = path };
+                var config = ConfigurationManager.OpenMappedExeConfiguration(configFile, ConfigurationUserLevel.None);
+                var connSection = config.ConnectionStrings;
+                if (string.IsNullOrEmpty(connStrName))
+                    continue;
+
+                // Get the named connection string
+                try
+                {
+                    var r = new Result();
+                    r.ConnectionString = connSection.ConnectionStrings[connStrName].ConnectionString;
+                    r.ProviderName = connSection.ConnectionStrings[connStrName].ProviderName;
+                    r.ConnectionStringConfigFile = path;
+                    return r;
+                }
+                catch
+                {
+                }
+            }
+            throw new InvalidOperationException(string.Format("There is no connection string name called '{0}'", connStrName));
+        }
+
+        public static string FindProjectItem(EnvDTE.Project project, string itemFileName)
+        {
+            foreach (EnvDTE.ProjectItem item in project.ProjectItems)
+            {
+                if (item.Name.Equals(itemFileName, StringComparison.InvariantCultureIgnoreCase))
+                    return item.Name;
+            }
+            return null;
+        }
+
+        public static EnvDTE.Project GetCurrentProject()
+        {
+            var serviceProvider = (IServiceProvider)TransformationContext.Current.Host;
+            if (serviceProvider == null)
+                throw new Exception("_host property returned unexpected value (null)");
+
+            var dte = (EnvDTE.DTE)serviceProvider.GetService(typeof(EnvDTE.DTE));
+            if (dte == null)
+                throw new Exception("Unable to retrieve EnvDTE.DTE");
+
+            var activeSolutionProjects = (Array)dte.ActiveSolutionProjects;
+            if (activeSolutionProjects == null)
+                throw new Exception("DTE.ActiveSolutionProjects returned null");
+
+            var dteProject = (EnvDTE.Project)activeSolutionProjects.GetValue(0);
+            if (dteProject == null)
+                throw new Exception("DTE.ActiveSolutionProjects[0] returned null");
+
+            return dteProject;
+        }
+
+        public static string GetProjectPath(EnvDTE.Project project)
+        {
+            var fullProjectName = project.FullName;
+
+            if (string.IsNullOrWhiteSpace(fullProjectName))
+                return string.Empty;
+
+            var info = new FileInfo(fullProjectName);
+            return info.Directory == null ? string.Empty : info.Directory.FullName;
+        }
+
+        public static string VsNamespaceSuggestion()
+        {
+            string suggestion = TransformationContext.Current.Host.ResolveParameterValue("directiveId", "namespaceDirectiveProcessor", "namespaceHint");
+            if (String.IsNullOrEmpty(suggestion))
+            {
+                return null;
+            }
+
+            return suggestion;
+        }
+    }
+#>

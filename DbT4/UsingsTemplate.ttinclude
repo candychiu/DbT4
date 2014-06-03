@@ -1,0 +1,76 @@
+﻿<#@ assembly name="$(SolutionDir)packages\DatabaseSchemaReader.1.3.3.0\lib\net40\DatabaseSchemaReader.dll" #>
+<#@ assembly name="$(SolutionDir)DbT4\bin\Debug\DbT4.dll" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="DatabaseSchemaReader" #>
+<#@ import namespace="DatabaseSchemaReader.DataSchema" #>
+<#@ import namespace="DbT4Lib" #>
+<#@ import namespace="System.Linq" #>
+<#+
+public class UsingsTemplate : CSharpTemplate
+{
+	public UserSettings Settings { get; set; }
+
+	public override string TransformText()
+	{
+		//base.TransformText();
+
+#>using System;
+<#+ 
+		if(Settings.ElementsToGenerate.HasFlag(UserSettings.Elements.Poco)) {
+#>using System.Collections.Generic;
+<#+
+		} 
+		if((Settings.ElementsToGenerate.HasFlag(UserSettings.Elements.Context) || 
+				Settings.ElementsToGenerate.HasFlag(UserSettings.Elements.Poco))) { 
+#>using System.ComponentModel.DataAnnotations.Schema;
+<#+
+		}
+		if(Settings.ElementsToGenerate.HasFlag(UserSettings.Elements.Context) || Settings.ElementsToGenerate.HasFlag(UserSettings.Elements.UnitOfWork)){ 
+#>using System.Data.Entity;
+<#+ 
+		}
+		if(Settings.ElementsToGenerate.HasFlag(UserSettings.Elements.PocoConfiguration)) { 
+#>using System.Data.Entity.ModelConfiguration;
+<#+ 
+		}                   
+		// if(AddWcfDataAttributes){
+		// using System.Runtime.Serialization;
+		// }
+		if((Settings.ElementsToGenerate.HasFlag(UserSettings.Elements.PocoConfiguration) || 
+			Settings.ElementsToGenerate.HasFlag(UserSettings.Elements.Context) || 
+			Settings.ElementsToGenerate.HasFlag(UserSettings.Elements.UnitOfWork)) && 
+			!Settings.ElementsToGenerate.HasFlag(UserSettings.Elements.Poco) && 
+			!string.IsNullOrWhiteSpace(Settings.PocoNamespace)) { 
+#>using <#= Settings.PocoNamespace #>;
+<#+
+		} 
+		if( Settings.ElementsToGenerate.HasFlag(UserSettings.Elements.PocoConfiguration) && 
+			!Settings.ElementsToGenerate.HasFlag(UserSettings.Elements.Context) && 
+			!string.IsNullOrWhiteSpace(Settings.ContextNamespace)) { 
+#>using <#= Settings.ContextNamespace #>;
+<#+
+		}
+		if( Settings.ElementsToGenerate.HasFlag(UserSettings.Elements.Context) && 
+			!Settings.ElementsToGenerate.HasFlag(UserSettings.Elements.UnitOfWork) && 
+			!string.IsNullOrWhiteSpace(Settings.UnitOfWorkNamespace)) { 
+#>using <#= Settings.UnitOfWorkNamespace #>;
+<#+
+		} 
+		if( Settings.ElementsToGenerate.HasFlag(UserSettings.Elements.Context) && 
+			!Settings.ElementsToGenerate.HasFlag(UserSettings.Elements.PocoConfiguration) && 
+			!string.IsNullOrWhiteSpace(Settings.PocoConfigurationNamespace)) { 
+#>using <#= Settings.PocoConfigurationNamespace #>;
+<#+
+		}
+		if(	Settings.ElementsToGenerate.HasFlag(UserSettings.Elements.PocoConfiguration)){ 
+#>using DatabaseGeneratedOption = System.ComponentModel.DataAnnotations.Schema.DatabaseGeneratedOption;
+<#+
+		} 
+		if (!string.IsNullOrEmpty(Settings.CollectionTypeNamespace)){
+#>using <#=Settings.CollectionTypeNamespace#>;
+<#+
+		}
+		return this.GenerationEnvironment.ToString();
+	}
+}
+#>

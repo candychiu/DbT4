@@ -1,0 +1,45 @@
+﻿<#@ assembly name="$(SolutionDir)packages\DatabaseSchemaReader.1.3.3.0\lib\net40\DatabaseSchemaReader.dll" #>
+<#@ assembly name="$(SolutionDir)DbT4\bin\Debug\DbT4.dll" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="DatabaseSchemaReader" #>
+<#@ import namespace="DatabaseSchemaReader.DataSchema" #>
+<#@ import namespace="DbT4Lib" #>
+<#@ import namespace="System.Linq" #>
+<#+
+public class PocoTemplate : CSharpTemplate
+{
+	public TableWrapper TableWrapper { get; set; }
+	public UserSettings Settings { get; set; }
+		  
+	public override string TransformText()
+	{
+		//base.TransformText();
+
+#>
+
+<#+ Settings.WritePocoClassAttributes(TableWrapper); #>
+	public <#+ if(Settings.MakeClassesPartial) { #>partial <#+ } #>class <#=TableWrapper.NameHumanCase#><#= Settings.WritePocoBaseClasses != null ? " : " + Settings.WritePocoBaseClasses(TableWrapper) : "" #>
+	{	
+<#+ 
+	//Settings.WritePocoBaseClassBody(TableWrapper); 
+
+		//int DataMemberOrder = 1;
+		foreach(var col in TableWrapper.Table.Columns.OrderBy(x => x.Ordinal))
+		{
+			var columnWrapper = new ColumnWrapper(col, TableWrapper, Settings);
+#>
+		<#= Settings.WritePocoColumn(columnWrapper) #> 
+<#+
+			//WriteLine(Settings.WritePocoColumn(columnWrapper));
+		}
+#>
+	}
+
+<#+
+		return this.GenerationEnvironment.ToString();
+	}
+}
+#>
+
+
+
