@@ -23,3 +23,5 @@ Thumbs.db
 *.lib
 *.sbr
 *sln.ide/
+bin/
+obj/
