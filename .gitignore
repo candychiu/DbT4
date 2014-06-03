@@ -25,3 +25,6 @@ Thumbs.db
 *sln.ide/
 bin/
 obj/
+packages/
+*Generator.cs
+*Generated.cs

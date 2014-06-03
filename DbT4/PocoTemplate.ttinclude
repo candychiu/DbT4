@@ -8,25 +8,50 @@
 <#+
 public class PocoTemplate : CSharpTemplate
 {
-	public TableWrapper TableWrapper { get; set; }
+	public IEnumerable<DatabaseTable> Tables { get; set; }
 	public UserSettings Settings { get; set; }
 		  
 	public override string TransformText()
 	{
 		//base.TransformText();
 
+		var headerRender = new UsingsTemplate();
+		headerRender.Settings = Settings;
+#>
+<#= headerRender.TransformText() #>
+<#+        
+		var nspoco = Settings.Namespace;
+		if (!string.IsNullOrEmpty(Settings.PocoNamespace))
+			nspoco = Settings.PocoNamespace;
+#>
+namespace <#= nspoco #>
+{
+<#+
+		foreach (var t in Tables)
+		{
+			var wrapper = new TableWrapper(t, Settings);
+			WriteTable(wrapper);
+		}            
+#>
+}
+<#+
+		return this.GenerationEnvironment.ToString();
+	}
+
+	private void WriteTable(TableWrapper tableWrapper)
+	{		
 #>
 
-<#+ Settings.WritePocoClassAttributes(TableWrapper); #>
-	public <#+ if(Settings.MakeClassesPartial) { #>partial <#+ } #>class <#=TableWrapper.NameHumanCase#><#= Settings.WritePocoBaseClasses != null ? " : " + Settings.WritePocoBaseClasses(TableWrapper) : "" #>
+<#+ Settings.WritePocoClassAttributes(tableWrapper); #>
+	public <#+ if(Settings.MakeClassesPartial) { #>partial <#+ } #>class <#=tableWrapper.NameHumanCase#><#= Settings.WritePocoBaseClasses != null ? " : " + Settings.WritePocoBaseClasses(tableWrapper) : "" #>
 	{	
 <#+ 
 	//Settings.WritePocoBaseClassBody(TableWrapper); 
 
 		//int DataMemberOrder = 1;
-		foreach(var col in TableWrapper.Table.Columns.OrderBy(x => x.Ordinal))
+		foreach(var col in tableWrapper.Table.Columns.OrderBy(x => x.Ordinal))
 		{
-			var columnWrapper = new ColumnWrapper(col, TableWrapper, Settings);
+			var columnWrapper = new ColumnWrapper(col, tableWrapper, Settings);
 #>
 		<#= Settings.WritePocoColumn(columnWrapper) #> 
 <#+
@@ -36,7 +61,7 @@ public class PocoTemplate : CSharpTemplate
 	}
 
 <#+
-		return this.GenerationEnvironment.ToString();
+		
 	}
 }
 #>

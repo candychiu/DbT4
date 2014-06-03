@@ -14,13 +14,10 @@
     var settings = new UserSettings();
     settings.ConnectionStringName = "SqliteAll";
     settings.Namespace = TransformationContextExtended.VsNamespaceSuggestion();
+    settings.Namespace = TransformationContextExtended.VsNamespaceSuggestion();
 
     var configConn = TransformationContextExtended.GetConnection(
         settings.ConnectionStringName, settings.ConfigFilenameSearchOrder);
-
-    var headerRender = new UsingsTemplate();
-    headerRender.Settings = settings;
-    headerRender.Render();
 
     var dbReader = new DatabaseReader(configConn.ConnectionString, configConn.ProviderName);
     dbReader.DataTypes();
@@ -28,28 +25,12 @@
 
 
     // generate POCO
-    var nspoco = settings.Namespace;
-    if (!string.IsNullOrEmpty(settings.PocoNamespace))
-        nspoco = settings.PocoNamespace;
+    var pocoTemplate = new PocoTemplate();
+    pocoTemplate.Settings = settings;
+    pocoTemplate.Tables = tables;
+    pocoTemplate.Output.File = settings.DbContextName + "Poco.Generated.cs";
+    pocoTemplate.Render();
 #>
-
-namespace <#= nspoco #>
-{
-<#
-    var tableRender = new PocoTemplate();
-    tableRender.Settings = settings;
-    foreach (var table in tables)
-    {
-        var tableWrapper = new TableWrapper(table, settings);
-        tableRender.TableWrapper = tableWrapper;        
-        tableRender.Render();
-    }            
-#>
-}
-
-
-
-
 
 
 
