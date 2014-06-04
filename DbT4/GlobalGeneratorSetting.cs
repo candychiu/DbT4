@@ -113,7 +113,7 @@ namespace DbT4Lib
         public UserSettings()
         {
             Namespace = "";
-            DbContextName = "MyDbContext";
+            DbContextName = "MyDb";
             ConnectionStringName = "";  // Searches for this connection string in config files listed below
             ConfigurationClassName = "Configuration"; // Configuration, Mapping, Map, etc. This is appended to the Poco class name to configure the mappings.
             ConfigFilenameSearchOrder = new string[] { "app.config", "web.config", "app.config.transform", "web.config.transform" }; // Add more here if required. The config files are searched for in the local project first, then the whole solution second.

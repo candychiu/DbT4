@@ -3,18 +3,20 @@
 <#@   include file="T4Toolbox.tt"
 #><#@ include file="Utility.ttinclude"
 #><#@ include file="UsingsTemplate.ttinclude"
-#><#@ include file="PocoTemplate.ttinclude"#>
-<#@ assembly name="$(SolutionDir)packages\DatabaseSchemaReader.1.3.3.0\lib\net40\DatabaseSchemaReader.dll" #>
+#><#@ include file="PocoTemplate.ttinclude"
+#><#@ include file="DbContextTemplate.ttinclude"
+#><#@ assembly name="$(SolutionDir)packages\DatabaseSchemaReader.1.3.3.0\lib\net40\DatabaseSchemaReader.dll" #>
 <#@ assembly name="$(SolutionDir)DbT4\bin\Debug\DbT4.dll" #>
 <#@ import namespace="DatabaseSchemaReader" #>
 <#@ import namespace="DatabaseSchemaReader.DataSchema" #>
 <#@ import namespace="DbT4Lib" #>
 <#@ import namespace="System.Linq" #>
+<#@ import namespace="Elements = DbT4Lib.UserSettings.Elements" #>
 <#
     var settings = new UserSettings();
     settings.ConnectionStringName = "SqliteAll";
     settings.Namespace = TransformationContextExtended.VsNamespaceSuggestion();
-    settings.Namespace = TransformationContextExtended.VsNamespaceSuggestion();
+    settings.ElementsToGenerate = Elements.Context | Elements.UnitOfWork;
 
     var configConn = TransformationContextExtended.GetConnection(
         settings.ConnectionStringName, settings.ConfigFilenameSearchOrder);
@@ -25,11 +27,18 @@
 
 
     // generate POCO
-    var pocoTemplate = new PocoTemplate();
-    pocoTemplate.Settings = settings;
-    pocoTemplate.Tables = tables;
-    pocoTemplate.Output.File = settings.DbContextName + "Poco.Generated.cs";
-    pocoTemplate.Render();
+    //var pocoTemplate = new PocoTemplate();
+    //pocoTemplate.Settings = settings;
+    //pocoTemplate.Tables = tables;
+    //pocoTemplate.Output.File = settings.DbContextName + ".Poco.Generated.cs";
+    //pocoTemplate.Render();
+
+    // generate Context
+    var contextTemplate = new DbContextTemplate();
+    contextTemplate.Settings = settings;
+    contextTemplate.Tables = tables;
+    contextTemplate.Output.File = settings.DbContextName + ".Generated.cs";
+    contextTemplate.Render();
 #>
 
 

@@ -16,15 +16,20 @@ public class PocoTemplate : CSharpTemplate
 		//base.TransformText();
 
 		var headerRender = new UsingsTemplate();
-		headerRender.Settings = Settings;
+        headerRender.Settings = Settings;
+		headerRender.Elements = UserSettings.Elements.Poco;
 #>
 <#= headerRender.TransformText() #>
 <#+        
-		var nspoco = Settings.Namespace;
+		var nsPoco = Settings.Namespace;
 		if (!string.IsNullOrEmpty(Settings.PocoNamespace))
-			nspoco = Settings.PocoNamespace;
+			nsPoco = Settings.PocoNamespace;
 #>
-namespace <#= nspoco #>
+
+// ************************************************************************
+// <#= Settings.DbContextName #> POCO
+
+namespace <#= nsPoco #>
 {
 <#+
 		foreach (var t in Tables)
@@ -49,11 +54,18 @@ namespace <#= nspoco #>
 	//Settings.WritePocoBaseClassBody(TableWrapper); 
 
 		//int DataMemberOrder = 1;
+		
+
 		foreach(var col in tableWrapper.Table.Columns.OrderBy(x => x.Ordinal))
 		{
 			var columnWrapper = new ColumnWrapper(col, tableWrapper, Settings);
+
+			var comments = string.Empty;
+			if (Settings.IncludeComments)
+				comments = string.Format("// {0} {1}", columnWrapper.Name, 
+				columnWrapper.IsPrimaryKey ? " (Primary key)" : string.Empty);			
 #>
-		<#= Settings.WritePocoColumn(columnWrapper) #> 
+		<#= Settings.WritePocoColumn(columnWrapper) #> <#= comments #> 
 <#+
 			//WriteLine(Settings.WritePocoColumn(columnWrapper));
 		}
@@ -65,6 +77,8 @@ namespace <#= nspoco #>
 	}
 }
 #>
+
+
 
 
 

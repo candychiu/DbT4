@@ -9,6 +9,7 @@ namespace DbT4Lib
         // Properties
         public string Name { get; private set; }
         public string NameHumanCase { get; private set; }
+        public string NameHumanCasePlural { get; private set; }            
         public string ClassName { get; private set; }
         public string CleanName { get; private set; }
         //public string Schema { get { return _table.SchemaOwner; } }
@@ -41,6 +42,7 @@ namespace DbT4Lib
                 string.Compare(_table.SchemaOwner, "dbo", StringComparison.OrdinalIgnoreCase) != 0)
                 NameHumanCase = _table.SchemaOwner + "_" + NameHumanCase;
             NameHumanCase = nameHelper.ResolveNameConflict(NameHumanCase);
+            NameHumanCasePlural = settings.EntityNameService.MakePlural(NameHumanCase);
         }
     }
 

@@ -5,9 +5,11 @@
 <#@ import namespace="DatabaseSchemaReader.DataSchema" #>
 <#@ import namespace="DbT4Lib" #>
 <#@ import namespace="System.Linq" #>
+<#@ import namespace="Elements = DbT4Lib.UserSettings.Elements" #>
 <#+
 public class UsingsTemplate : CSharpTemplate
 {
+	public Elements Elements { get; set; }
 	public UserSettings Settings { get; set; }
 
 	public override string TransformText()
@@ -16,53 +18,53 @@ public class UsingsTemplate : CSharpTemplate
 
 #>using System;
 <#+ 
-		if(Settings.ElementsToGenerate.HasFlag(UserSettings.Elements.Poco)) {
+		if(Elements.HasFlag(Elements.Poco)) {
 #>using System.Collections.Generic;
 <#+
 		} 
-		if((Settings.ElementsToGenerate.HasFlag(UserSettings.Elements.Context) || 
-				Settings.ElementsToGenerate.HasFlag(UserSettings.Elements.Poco))) { 
+		if((Elements.HasFlag(Elements.Context) || 
+				Elements.HasFlag(Elements.Poco))) { 
 #>using System.ComponentModel.DataAnnotations.Schema;
 <#+
 		}
-		if(Settings.ElementsToGenerate.HasFlag(UserSettings.Elements.Context) || Settings.ElementsToGenerate.HasFlag(UserSettings.Elements.UnitOfWork)){ 
+		if(Elements.HasFlag(Elements.Context) || Elements.HasFlag(Elements.UnitOfWork)){ 
 #>using System.Data.Entity;
 <#+ 
 		}
-		if(Settings.ElementsToGenerate.HasFlag(UserSettings.Elements.PocoConfiguration)) { 
+		if(Elements.HasFlag(Elements.PocoConfiguration)) { 
 #>using System.Data.Entity.ModelConfiguration;
 <#+ 
 		}                   
 		// if(AddWcfDataAttributes){
 		// using System.Runtime.Serialization;
 		// }
-		if((Settings.ElementsToGenerate.HasFlag(UserSettings.Elements.PocoConfiguration) || 
-			Settings.ElementsToGenerate.HasFlag(UserSettings.Elements.Context) || 
-			Settings.ElementsToGenerate.HasFlag(UserSettings.Elements.UnitOfWork)) && 
-			!Settings.ElementsToGenerate.HasFlag(UserSettings.Elements.Poco) && 
+		if((Elements.HasFlag(Elements.PocoConfiguration) || 
+			Elements.HasFlag(Elements.Context) || 
+			Elements.HasFlag(Elements.UnitOfWork)) && 
+			!Elements.HasFlag(Elements.Poco) && 
 			!string.IsNullOrWhiteSpace(Settings.PocoNamespace)) { 
 #>using <#= Settings.PocoNamespace #>;
 <#+
 		} 
-		if( Settings.ElementsToGenerate.HasFlag(UserSettings.Elements.PocoConfiguration) && 
-			!Settings.ElementsToGenerate.HasFlag(UserSettings.Elements.Context) && 
+		if( Elements.HasFlag(Elements.PocoConfiguration) && 
+			!Elements.HasFlag(Elements.Context) && 
 			!string.IsNullOrWhiteSpace(Settings.ContextNamespace)) { 
 #>using <#= Settings.ContextNamespace #>;
 <#+
 		}
-		if( Settings.ElementsToGenerate.HasFlag(UserSettings.Elements.Context) && 
-			!Settings.ElementsToGenerate.HasFlag(UserSettings.Elements.UnitOfWork) && 
+		if( Elements.HasFlag(Elements.Context) && 
+			!Elements.HasFlag(Elements.UnitOfWork) && 
 			!string.IsNullOrWhiteSpace(Settings.UnitOfWorkNamespace)) { 
 #>using <#= Settings.UnitOfWorkNamespace #>;
 <#+
 		} 
-		if( Settings.ElementsToGenerate.HasFlag(UserSettings.Elements.Context) && 
-			!Settings.ElementsToGenerate.HasFlag(UserSettings.Elements.PocoConfiguration) && 
+		if( Elements.HasFlag(Elements.Context) && 
+			!Elements.HasFlag(Elements.PocoConfiguration) && 
 			!string.IsNullOrWhiteSpace(Settings.PocoConfigurationNamespace)) { 
 #>using <#= Settings.PocoConfigurationNamespace #>;
 <#+
 		}
-		if(	Settings.ElementsToGenerate.HasFlag(UserSettings.Elements.PocoConfiguration)){ 
+		if(	Elements.HasFlag(Elements.PocoConfiguration)){ 
 #>using DatabaseGeneratedOption = System.ComponentModel.DataAnnotations.Schema.DatabaseGeneratedOption;
 <#+
 		} 

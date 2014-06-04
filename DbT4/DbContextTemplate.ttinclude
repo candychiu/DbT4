@@ -1,0 +1,138 @@
+﻿<#@ import namespace="Elements = DbT4Lib.UserSettings.Elements" #>
+<#+
+public class DbContextTemplate : CSharpTemplate
+{
+	public IEnumerable<DatabaseTable> Tables { get; set; }
+	public UserSettings Settings { get; set; }
+
+	public override string TransformText()
+	{
+		//base.TransformText();
+
+		var elements = Settings.ElementsToGenerate & (Elements.Context | Elements.UnitOfWork);
+
+		var headerRender = new UsingsTemplate();
+		headerRender.Settings = Settings;
+		headerRender.Elements = elements;
+#>
+<#= headerRender.TransformText() #>
+<#+
+		// ---- Unit of Work ---------------
+		var unitOfWorkClass = string.Empty;
+		if(elements.HasFlag(Elements.UnitOfWork)) {
+
+			var nsUow = Settings.Namespace;
+			if (!string.IsNullOrEmpty(Settings.UnitOfWorkNamespace))
+				nsUow = Settings.UnitOfWorkNamespace;
+
+			unitOfWorkClass = "I" + Settings.DbContextName;
+#>
+// ************************************************************************
+// <#= Settings.DbContextName #> Unit of Work
+
+namespace <#= nsUow #>
+{
+	public interface <#=unitOfWorkClass#> : IDisposable
+	{
+<#+
+			foreach (var t in Tables)
+			{
+				var wrapper = new TableWrapper(t, Settings);
+#>
+		IDbSet<<#= wrapper.NameHumanCase #>> <#= wrapper.NameHumanCasePlural #> { get; set; }
+<#+         } #>
+		int SaveChanges();
+	}
+}
+<#+      } #>
+<#+
+		// ---- Context ---------------
+		if(elements.HasFlag(Elements.Context)) {
+
+			var nsContext = Settings.Namespace;
+			if (!string.IsNullOrEmpty(Settings.ContextNamespace))
+				nsContext = Settings.ContextNamespace;
+#>
+
+// ************************************************************************
+// <#= Settings.DbContextName #> Context
+
+namespace <#= nsContext #>
+{
+	public <#+ if(Settings.MakeClassesPartial) { #>partial <#+ } #>class <#=Settings.DbContextName#> : DbContext <#= unitOfWorkClass == "" ? "" : ", " + unitOfWorkClass #>
+	{
+
+<#+
+			foreach (var t in Tables)
+			{
+				var wrapper = new TableWrapper(t, Settings);
+#>
+		public IDbSet<<#= wrapper.NameHumanCase #>> <#= wrapper.NameHumanCasePlural #> { get; set; }
+<#+         } #>
+
+
+		static <#=Settings.DbContextName#>()
+		{
+			Database.SetInitializer<<#=Settings.DbContextName#>>(null);
+		}
+
+		public <#=Settings.DbContextName#>()
+			: base("Name=<#=Settings.ConnectionStringName#>")
+		{
+<#+         if(Settings.MakeClassesPartial) {
+#>        InitializePartial();
+<#+         }#>
+		}
+
+		public <#=Settings.DbContextName#>(string connectionString) : base(connectionString)
+		{
+<#+         if(Settings.MakeClassesPartial) {
+#>        InitializePartial();
+<#+         }#>
+		}
+
+		public <#=Settings.DbContextName#>(string connectionString, System.Data.Entity.Infrastructure.DbCompiledModel model) : base(connectionString, model)
+		{
+<#+         if(Settings.MakeClassesPartial) {
+#>        InitializePartial();
+<#+         }#>
+		}
+
+		protected override void OnModelCreating(DbModelBuilder modelBuilder)
+		{
+			base.OnModelCreating(modelBuilder);
+<#+
+			foreach (var t in Tables)
+			{
+				var wrapper = new TableWrapper(t, Settings);
+#>
+			modelBuilder.Configurations.Add(new <#= wrapper.NameHumanCase + Settings.ConfigurationClassName #>());
+<#+         } #>
+<#+         if(Settings.MakeClassesPartial) {
+#>          OnModelCreatingPartial(modelBuilder);
+<#+         }#>
+		}
+
+		public static DbModelBuilder CreateModel(DbModelBuilder modelBuilder, string schema)
+		{
+<#+
+			foreach (var t in Tables)
+			{
+				var wrapper = new TableWrapper(t, Settings);
+#>
+			modelBuilder.Configurations.Add(new <#= wrapper.NameHumanCase + Settings.ConfigurationClassName#>(schema));
+<#+         } #>
+			return modelBuilder;
+		}
+<#+         if(Settings.MakeClassesPartial) {
+#>
+		partial void InitializePartial();
+		partial void OnModelCreatingPartial(DbModelBuilder modelBuilder);
+<#+         }#>
+	}
+}
+<#+      }
+		return this.GenerationEnvironment.ToString();
+	}
+}
+#>

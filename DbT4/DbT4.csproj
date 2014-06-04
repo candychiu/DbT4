@@ -50,20 +50,25 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DatabaseObjectWrapper.cs" />
-    <Compile Include="DbToPoco.cs">
+    <Compile Include="DbT4Generator.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
-      <DependentUpon>DbToPoco.tt</DependentUpon>
+      <DependentUpon>DbT4Generator.tt</DependentUpon>
     </Compile>
     <Compile Include="GlobalGeneratorSetting.cs" />
+    <Compile Include="MyDb.Generated.cs">
+      <DependentUpon>DbT4Generator.tt</DependentUpon>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="EntityNameService.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <None Include="DbToPoco.tt">
+    <None Include="DbContextTemplate.ttinclude" />
+    <None Include="DbT4Generator.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>DbToPoco.cs</LastGenOutput>
+      <LastGenOutput>DbT4Generator.cs</LastGenOutput>
+      <LastOutputs>.\MyDb.Generated.cs</LastOutputs>
     </None>
     <None Include="packages.config" />
     <None Include="PocoTemplate.ttinclude" />
