@@ -16,7 +16,11 @@
     var settings = new UserSettings();
     settings.ConnectionStringName = "SqliteAll";
     settings.Namespace = TransformationContextExtended.VsNamespaceSuggestion();
-    settings.ElementsToGenerate = Elements.Context | Elements.UnitOfWork;
+    settings.PocoNamespace = "PocoNs";
+    settings.UnitOfWorkNamespace = "ContextNs";
+    settings.ContextNamespace = "ContextNs";
+    settings.PocoConfigurationNamespace = "ContextNs";
+    settings.ElementsToGenerate = Elements.Context | Elements.UnitOfWork | Elements.PocoConfiguration;
 
     var configConn = TransformationContextExtended.GetConnection(
         settings.ConnectionStringName, settings.ConfigFilenameSearchOrder);
@@ -27,17 +31,17 @@
 
 
     // generate POCO
-    //var pocoTemplate = new PocoTemplate();
-    //pocoTemplate.Settings = settings;
-    //pocoTemplate.Tables = tables;
-    //pocoTemplate.Output.File = settings.DbContextName + ".Poco.Generated.cs";
-    //pocoTemplate.Render();
+    var pocoTemplate = new PocoTemplate();
+    pocoTemplate.Settings = settings;
+    pocoTemplate.Tables = tables;
+    pocoTemplate.Output.File = settings.DbContextName + ".Poco.Generated.cs";
+    pocoTemplate.Render();
 
     // generate Context
     var contextTemplate = new DbContextTemplate();
     contextTemplate.Settings = settings;
     contextTemplate.Tables = tables;
-    contextTemplate.Output.File = settings.DbContextName + ".Generated.cs";
+    contextTemplate.Output.File = settings.DbContextName + ".Context.Generated.cs";
     contextTemplate.Render();
 #>
 

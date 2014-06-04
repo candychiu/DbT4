@@ -9,15 +9,18 @@ public class DbContextTemplate : CSharpTemplate
 	{
 		//base.TransformText();
 
-		var elements = Settings.ElementsToGenerate & (Elements.Context | Elements.UnitOfWork);
+		var elements = (Elements.Poco | Settings.ElementsToGenerate) 
+			& (Elements.Context | Elements.UnitOfWork | Elements.PocoConfiguration);
 
 		var headerRender = new UsingsTemplate();
 		headerRender.Settings = Settings;
 		headerRender.Elements = elements;
 #>
 <#= headerRender.TransformText() #>
+
 <#+
-		// ---- Unit of Work ---------------
+		//----------------------------------------------------------------------
+		// Context Interface
 		var unitOfWorkClass = string.Empty;
 		if(elements.HasFlag(Elements.UnitOfWork)) {
 
@@ -27,9 +30,9 @@ public class DbContextTemplate : CSharpTemplate
 
 			unitOfWorkClass = "I" + Settings.DbContextName;
 #>
-// ************************************************************************
+// --------------------------------------
 // <#= Settings.DbContextName #> Unit of Work
-
+// --------------------------------------
 namespace <#= nsUow #>
 {
 	public interface <#=unitOfWorkClass#> : IDisposable
@@ -45,8 +48,10 @@ namespace <#= nsUow #>
 	}
 }
 <#+      } #>
+
 <#+
-		// ---- Context ---------------
+		//----------------------------------------------------------------------
+		// Context Implementation
 		if(elements.HasFlag(Elements.Context)) {
 
 			var nsContext = Settings.Namespace;
@@ -54,9 +59,9 @@ namespace <#= nsUow #>
 				nsContext = Settings.ContextNamespace;
 #>
 
-// ************************************************************************
+// --------------------------------------
 // <#= Settings.DbContextName #> Context
-
+// --------------------------------------
 namespace <#= nsContext #>
 {
 	public <#+ if(Settings.MakeClassesPartial) { #>partial <#+ } #>class <#=Settings.DbContextName#> : DbContext <#= unitOfWorkClass == "" ? "" : ", " + unitOfWorkClass #>
@@ -128,11 +133,76 @@ namespace <#= nsContext #>
 #>
 		partial void InitializePartial();
 		partial void OnModelCreatingPartial(DbModelBuilder modelBuilder);
-<#+         }#>
+<#+         } #>
 	}
 }
-<#+      }
+<#+     } #>
+
+<#+                    
+		//----------------------------------------------------------------------
+		// Mapping Implementation
+		if(elements.HasFlag(Elements.PocoConfiguration)) {
+
+			var nsMapping = Settings.Namespace;
+			if (!string.IsNullOrEmpty(Settings.PocoConfigurationNamespace))
+				nsMapping = Settings.PocoConfigurationNamespace;
+#>
+
+// --------------------------------------
+// <#= Settings.DbContextName #> Poco Mapping
+// --------------------------------------
+namespace <#= nsMapping #>
+{
+<#+
+			foreach (var t in Tables)
+			{
+				var wrapper = new TableWrapper(t, Settings);
+				var mapperClassName = wrapper.NameHumanCase + Settings.ConfigurationClassName;
+				var prependSchema = string.Empty;
+				if (!string.IsNullOrEmpty(wrapper.Schema))
+						prependSchema = wrapper.Schema + ".";
+#>
+	internal class <#=mapperClassName#> : EntityTypeConfiguration<<#=wrapper.NameHumanCase#>>
+	{
+		public <#=mapperClassName#>(string schema = "<#=wrapper.Schema#>")
+		{
+			ToTable(schema + ".<#=prependSchema + wrapper.Name#>");
+<#+             if (!string.IsNullOrEmpty(wrapper.PrimaryKeyNameHumanCase)) { #>
+			HasKey(<#= wrapper.PrimaryKeyNameHumanCase #>);
+<#+             } #>
+<#+
+				foreach(var col in wrapper.Table.Columns.OrderBy(x => x.Ordinal))
+				{
+					var columnWrapper = new ColumnWrapper(col, wrapper, Settings);
+#>
+			<#= columnWrapper.Config #>
+<#+             } 
+				//if(tbl.HasForeignKey) { 
+					//foreach(Column col in from c in tbl.Columns.OrderBy(x => x.Ordinal) where c.ConfigFk != null select c) {
+						//Write(col.ConfigFk); 
+					//}
+				//} 
+				//foreach (string s in tbl.MappingConfiguration)
+				//{
+					//Write(s);
+				//} 		
+				if (Settings.MakeClassesPartial) { 
+#>          InitializePartial();
+<#+             }         
+#>        }
+<#+             if (Settings.MakeClassesPartial) { #>
+		partial void InitializePartial();
+<#+             } 		      
+#>    }
+<#+         }
+		} #>
+}
+<#+
+		//----------------------------------------------------------------------
 		return this.GenerationEnvironment.ToString();
 	}
 }
 #>
+
+
+

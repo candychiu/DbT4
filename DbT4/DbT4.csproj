@@ -56,7 +56,10 @@
       <DependentUpon>DbT4Generator.tt</DependentUpon>
     </Compile>
     <Compile Include="GlobalGeneratorSetting.cs" />
-    <Compile Include="MyDb.Generated.cs">
+    <Compile Include="MyDb.Context.Generated.cs">
+      <DependentUpon>DbT4Generator.tt</DependentUpon>
+    </Compile>
+    <Compile Include="MyDb.Poco.Generated.cs">
       <DependentUpon>DbT4Generator.tt</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -68,7 +71,10 @@
     <None Include="DbT4Generator.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>DbT4Generator.cs</LastGenOutput>
-      <LastOutputs>.\MyDb.Generated.cs</LastOutputs>
+      <LastOutputs>
+.\MyDb.Context.Generated.cs
+.\MyDb.Poco.Generated.cs
+</LastOutputs>
     </None>
     <None Include="packages.config" />
     <None Include="PocoTemplate.ttinclude" />

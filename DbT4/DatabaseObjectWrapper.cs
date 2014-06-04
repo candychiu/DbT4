@@ -1,6 +1,7 @@
 ﻿using DatabaseSchemaReader.DataSchema;
 using System;
 using System.Text.RegularExpressions;
+using System.Linq;
 
 namespace DbT4Lib
 {
@@ -12,12 +13,28 @@ namespace DbT4Lib
         public string NameHumanCasePlural { get; private set; }            
         public string ClassName { get; private set; }
         public string CleanName { get; private set; }
-        //public string Schema { get { return _table.SchemaOwner; } }
+        public string PrimaryKeyNameHumanCase { get; private set; }
+        public string Schema { get { return _table.SchemaOwner; } }
         //public string Type;
         //public bool IsMapping;
         //public bool IsView;
         //public bool HasForeignKey;
         //public bool HasNullableColumns;
+
+        private void SetPrimaryKeyNameHumanCase(UserSettings settings)
+        {
+            var pkNames = _table.Columns.Where(i => i.IsPrimaryKey).Select(c =>
+            {
+                var columnWrapper = new ColumnWrapper(c, this, settings);
+                return "x." + columnWrapper.PropertyNameHumanCase;
+            }).ToList();
+            if (pkNames.Count == 0)
+                PrimaryKeyNameHumanCase = string.Empty;
+            else if (pkNames.Count == 1)
+                PrimaryKeyNameHumanCase = "x => " + pkNames.First();
+            else 
+                PrimaryKeyNameHumanCase = string.Format("x => new {{ {0} }}", string.Join(", ", pkNames));
+        }
 
         private DatabaseTable _table;
         public DatabaseTable Table { get { return _table; } }
@@ -43,6 +60,8 @@ namespace DbT4Lib
                 NameHumanCase = _table.SchemaOwner + "_" + NameHumanCase;
             NameHumanCase = nameHelper.ResolveNameConflict(NameHumanCase);
             NameHumanCasePlural = settings.EntityNameService.MakePlural(NameHumanCase);
+
+            SetPrimaryKeyNameHumanCase(settings);
         }
     }
 
@@ -114,7 +133,10 @@ namespace DbT4Lib
         public string Name { get { return _column.Name; } }
         //public int DateTimePrecision;
         //public string Default;
-        public int? MaxLength { get { return _column.Length.HasValue ? _column.Length.Value : 0; } }
+        public int? MaxLength
+        {
+            get { return _column.Length.HasValue && _column.DataType.NetDataTypeCSharpName == "string" ? _column.Length.Value : 0; }
+        }
         public int Precision { get { return _column.Precision.HasValue ? _column.Precision.Value : 0; } }
         public string PropertyName { get; private set; }
         public string PropertyNameHumanCase { get; private set; }
@@ -156,7 +178,7 @@ namespace DbT4Lib
                     if (IsPrimaryKey && !IsIdentity && !IsStoreGenerated)
                         databaseGeneratedOption = ".HasDatabaseGeneratedOption(DatabaseGeneratedOption.None)";
                 }
-                return string.Format("Property(x => x.{0}).HasColumnName(\"{1}\"){2}{3}{4}{5}{6};", PropertyNameHumanCase, Name,
+                return string.Format("Property(x => x.{0}).HasColumnName(\"{1}\"){2}{3}{4}{5};", PropertyNameHumanCase, Name,
                                     (IsNullable) ? ".IsOptional()" : ".IsRequired()",
                                     (MaxLength > 0) ? ".HasMaxLength(" + MaxLength + ")" : string.Empty,
                                     (Scale > 0) ? ".HasPrecision(" + Precision + "," + Scale + ")" : string.Empty,
