@@ -158,15 +158,15 @@ namespace <#= nsMapping #>
 			{
 				var wrapper = new TableWrapper(t, Settings);
 				var mapperClassName = wrapper.NameHumanCase + Settings.ConfigurationClassName;
-				var prependSchema = string.Empty;
+				var schema = "dbo";
 				if (!string.IsNullOrEmpty(wrapper.Schema))
-						prependSchema = wrapper.Schema + ".";
+                        schema = wrapper.Schema;
 #>
 	internal class <#=mapperClassName#> : EntityTypeConfiguration<<#=wrapper.NameHumanCase#>>
 	{
-		public <#=mapperClassName#>(string schema = "<#=wrapper.Schema#>")
+		public <#=mapperClassName#>(string schema = "<#=schema#>")
 		{
-			ToTable(schema + ".<#=prependSchema + wrapper.Name#>");
+			ToTable(schema + ".<#=wrapper.Name#>");
 <#+             if (!string.IsNullOrEmpty(wrapper.PrimaryKeyNameHumanCase)) { #>
 			HasKey(<#= wrapper.PrimaryKeyNameHumanCase #>);
 <#+             } #>
